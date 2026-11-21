@@ -1,5 +1,8 @@
 name: pipeline
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -24,7 +27,7 @@ jobs:
 
     steps:
       - name: "⬇️ Checkout main"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: "main"
           path: "${{ env.REPO_MAIN }}"
@@ -32,7 +35,7 @@ jobs:
           fetch-depth: 1
 
       - name: "⬇️ Checkout data"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: "data"
           path: "${{ env.REPO_MAIN }}_data"
@@ -40,6 +43,8 @@ jobs:
           fetch-depth: 1
 
       - name: "⚙️ Run pipeline"
+        env:
+          MAX_DT: ${{ github.event.inputs.max_dt }}
         run: |
           cd ${{ env.REPO_MAIN }}
           export PYTHONPATH="$PYTHONPATH:./src"
@@ -49,7 +54,7 @@ jobs:
           git config --global --add safe.directory /__w/${{ env.REPO_MAIN }}/${{ env.REPO_MAIN }}
 
           git pull origin main --rebase
-          python workflows/pipeline.py ${{ github.event.inputs.max_dt }}
+          MAX_DT="${MAX_DT:-1}" python workflows/pipeline.py "$MAX_DT"
 
       - name: "⬆️ Push main"
         run: |
